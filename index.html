@@ -661,7 +661,56 @@ document.cookie = "password=creeper";
 </head>
 
 <body>
+<!-- ad start -->
+<style>
+    /* Style for the image container */
+    .image-container {
+        position: relative;
+        display: inline-block;
+    }
 
+    /* Style for the close button */
+    .close-btn {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background-color: rgba(0, 0, 0, 0.5);
+        color: white;
+        font-size: 30px;
+        padding: 5px;
+        cursor: pointer;
+        border-radius: 50%;
+    }
+
+    .close-btn:hover {
+        background-color: rgba(0, 0, 0, 0.8);
+    }
+</style>
+
+<script>
+    // Function to close the image and set a cookie
+    function closeImage() {
+        document.getElementById('image-container').style.display = 'none';
+        // Set a cookie to remember that the image was closed
+        document.cookie = "imageClosed=true; max-age=" + 60*60*24*365 + "; path=/";
+    }
+
+    // Check if the image has been closed previously
+    window.onload = function() {
+        if (document.cookie.indexOf("imageClosed=true") !== -1) {
+            document.getElementById('image-container').style.display = 'none';
+        }
+    }
+</script>
+
+<!-- The HTML for the image and the close button -->
+<div class="image-container" id="image-container">
+    <span class="close-btn" onclick="closeImage()">X</span>
+    <a href="https://www.bennyf.art/" target="_blank">
+        <img src="/bennyf.jpg" alt="Image" width="100%" />
+    </a>
+</div>
+<!-- ad end -->
   <div id="website-content" style="display: inline;">
     <html>
 
