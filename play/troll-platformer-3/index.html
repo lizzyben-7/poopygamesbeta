@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Coming Soon</title>
+  
+  <!-- Digital Clock Style Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link 
+    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap" 
+    rel="stylesheet"
+  >
+
+  <style>
+    /* Reset and base styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background-color: #1a1a1a;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    /* Container */
+    .coming-soon-container {
+      text-align: center;
+      max-width: 600px;
+      padding: 20px;
+    }
+
+    .coming-soon-container h1 {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      letter-spacing: 2px;
+    }
+
+    .coming-soon-container p {
+      font-size: 1.2rem;
+      margin-bottom: 2rem;
+      color: #ccc;
+    }
+
+    /* Countdown section */
+    .countdown {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+    }
+
+    .countdown-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .countdown-item span:first-child {
+      font-family: 'Orbitron', sans-serif; /* Digital clock style font */
+      font-size: 3rem;
+      background-color: #333;
+      border-radius: 10px;
+      padding: 10px 20px;
+      margin-bottom: 10px;
+      display: inline-block;
+      min-width: 80px;
+      text-align: center;
+    }
+
+    .countdown-item span:last-child {
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #bbb;
+    }
+  </style>
+</head>
+<body>
+  <div class="coming-soon-container">
+    <h1>Coming Soon</h1>
+    <p>This game will be available on Monday the 27</p>
+
+    <div class="countdown">
+      <!-- Days -->
+      <div class="countdown-item">
+        <span id="days">00</span>
+        <span>Days</span>
+      </div>
+      <!-- Hours -->
+      <div class="countdown-item">
+        <span id="hours">00</span>
+        <span>Hours</span>
+      </div>
+      <!-- Minutes -->
+      <div class="countdown-item">
+        <span id="minutes">00</span>
+        <span>Minutes</span>
+      </div>
+      <!-- Seconds -->
+      <div class="countdown-item">
+        <span id="seconds">00</span>
+        <span>Seconds</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Set the date and time we're counting down to
+    // Here: Monday, January 27, 2025, 00:00:00
+    const countDownDate = new Date("Jan 27, 2025 00:00:00").getTime();
+    
+    // Update the countdown every 1 second
+    const timer = setInterval(function() {
+      // Get today's date and time (in milliseconds)
+      const now = new Date().getTime();
+
+      // Find the distance between now and the countdown date
+      const distance = countDownDate - now;
+
+      // Calculate days, hours, minutes and seconds
+      const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+      const hours = Math.floor(
+        (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+      );
+      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+      // Display the results in the elements
+      document.getElementById("days").textContent = days < 10 ? "0" + days : days;
+      document.getElementById("hours").textContent = hours < 10 ? "0" + hours : hours;
+      document.getElementById("minutes").textContent = minutes < 10 ? "0" + minutes : minutes;
+      document.getElementById("seconds").textContent = seconds < 10 ? "0" + seconds : seconds;
+
+      // If the countdown is over, clear the interval and optionally show a message
+      if (distance < 0) {
+        clearInterval(timer);
+        document.getElementById("days").textContent = "00";
+        document.getElementById("hours").textContent = "00";
+        document.getElementById("minutes").textContent = "00";
+        document.getElementById("seconds").textContent = "00";
+        // You could display a launch message here if desired
+      }
+    }, 1000);
+  </script>
+</body>
+</html>
