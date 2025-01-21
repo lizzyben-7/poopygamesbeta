@@ -17,33 +17,59 @@
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
   <style>
-    /* Reset and base styles */
+    /***********************************************************************
+    * 1) GLOBAL / RESET / DARK THEME
+    ***********************************************************************/
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
     body {
-      background-color: #1a1a1a;
-      color: #fff;
       font-family: Arial, sans-serif;
+      color: #fff;
+      height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      height: 100vh;
+      overflow: hidden; /* Hide any overflow from animations */
+
+      /* Dark animated gradient background */
+      background: linear-gradient(135deg, #0d0d0d, #1a1a1a, #0d0d0d, #1a1a1a);
+      background-size: 400% 400%;
+      animation: animateBG 10s ease-in-out infinite;
     }
 
-    /* Container */
+    /* Keyframes for the animated gradient background */
+    @keyframes animateBG {
+      0% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    /***********************************************************************
+    * 2) COMING SOON CONTAINER
+    ***********************************************************************/
     .coming-soon-container {
       text-align: center;
       max-width: 600px;
       padding: 20px;
+      border-radius: 10px;
+      background-color: rgba(0, 0, 0, 0.3); /* Slight transparent overlay */
+      transition: box-shadow 0.5s;
     }
 
     .coming-soon-container h1 {
       font-size: 3rem;
       margin-bottom: 1rem;
       letter-spacing: 2px;
+      text-transform: uppercase;
     }
 
     .coming-soon-container p {
@@ -52,7 +78,9 @@
       color: #ccc;
     }
 
-    /* Countdown section */
+    /***********************************************************************
+    * 3) COUNTDOWN STYLING
+    ***********************************************************************/
     .countdown {
       display: flex;
       justify-content: center;
@@ -77,6 +105,7 @@
       display: inline-block;
       min-width: 80px;
       text-align: center;
+      box-shadow: 0 0 10px #000;
     }
 
     .countdown-item span:last-child {
@@ -86,12 +115,58 @@
       color: #bbb;
     }
 
-    /* Message shown after countdown ends */
+    /***********************************************************************
+    * 4) END MESSAGE (INITIALLY HIDDEN)
+    ***********************************************************************/
     #end-message {
       margin-top: 2rem;
       font-size: 1.4rem;
-      color: #ffcc00; /* A contrasting color for emphasis */
+      color: #ffcc00; /* Contrasting color for emphasis */
       display: none;  /* Hidden by default */
+    }
+
+    /***********************************************************************
+    * 5) ANIMATIONS AFTER COUNTDOWN ENDS (triggered by .end-animations)
+    ***********************************************************************/
+    /* 
+       We'll add a class 'end-animations' to <body> once the countdown ends.
+       This class triggers additional CSS animations below.
+    */
+    body.end-animations .coming-soon-container {
+      /* Neon-like pulsing box-shadow */
+      animation: neonPulse 2s infinite;
+    }
+
+    @keyframes neonPulse {
+      0%, 100% {
+        box-shadow: 0 0 15px #ff0, 0 0 30px #ff0, 0 0 45px #f0f;
+      }
+      50% {
+        box-shadow: 0 0 15px #00f, 0 0 30px #0ff, 0 0 45px #f00;
+      }
+    }
+
+    body.end-animations #end-message {
+      /* Neon text glow effect */
+      display: block;
+      animation: textGlow 1.5s infinite;
+    }
+
+    @keyframes textGlow {
+      0%, 100% {
+        text-shadow: 
+          0 0 5px #fff, 
+          0 0 10px #ff0, 
+          0 0 20px #ff0,
+          0 0 30px #ff0;
+      }
+      50% {
+        text-shadow: 
+          0 0 5px #fff, 
+          0 0 10px #f0f, 
+          0 0 20px #f0f,
+          0 0 30px #f0f;
+      }
     }
   </style>
 </head>
@@ -135,29 +210,27 @@
     // Example: Monday, January 27, 2025, 00:00:00
     const countDownDate = new Date("Jan 27, 2025 00:00:00").getTime();
     
-    // Create a function to launch confetti
+    // Function to launch confetti
     function launchConfetti() {
-      // Duration for confetti in ms
-      const duration = 1 * 1000; 
+      const duration = 1000; // 1 second
       const end = Date.now() + duration;
 
       (function frame() {
-        // Launch a few confetti from the left edge
+        // Confetti from left
         confetti({
           particleCount: 5,
           angle: 60,
           spread: 55,
-          origin: { x: 0 },
+          origin: { x: 0 }
         });
-        // Launch a few confetti from the right edge
+        // Confetti from right
         confetti({
           particleCount: 5,
           angle: 120,
           spread: 55,
-          origin: { x: 1 },
+          origin: { x: 1 }
         });
 
-        // Keep going until the time is up
         if (Date.now() < end) {
           requestAnimationFrame(frame);
         }
@@ -166,19 +239,18 @@
 
     // Update the countdown every 1 second
     const timer = setInterval(function() {
-      // Get current time in milliseconds
+      // Current time in ms
       const now = new Date().getTime();
-
       // Distance to the target date
       const distance = countDownDate - now;
 
-      // Calculate days, hours, minutes, and seconds
+      // Time calculations
       const days = Math.floor(distance / (1000 * 60 * 60 * 24));
       const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-      // Update the countdown display
+      // Update countdown display
       document.getElementById("days").textContent = days < 10 ? "0" + days : days;
       document.getElementById("hours").textContent = hours < 10 ? "0" + hours : hours;
       document.getElementById("minutes").textContent = minutes < 10 ? "0" + minutes : minutes;
@@ -188,17 +260,20 @@
       if (distance < 0) {
         clearInterval(timer);
 
-        // Set all values to 00
+        // Set all digits to "00"
         document.getElementById("days").textContent    = "00";
         document.getElementById("hours").textContent   = "00";
         document.getElementById("minutes").textContent = "00";
         document.getElementById("seconds").textContent = "00";
 
-        // Launch confetti
+        // 1) Show confetti
         launchConfetti();
 
-        // Show the end message
+        // 2) Reveal the end message
         document.getElementById("end-message").style.display = "block";
+
+        // 3) Trigger body-level CSS effects (pulses, glows, etc.)
+        document.body.classList.add("end-animations");
       }
     }, 1000);
   </script>
