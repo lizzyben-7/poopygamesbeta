@@ -12,6 +12,9 @@
     href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap" 
     rel="stylesheet"
   >
+  
+  <!-- Confetti library (canvas-confetti) -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
   <style>
     /* Reset and base styles */
@@ -82,6 +85,14 @@
       letter-spacing: 1px;
       color: #bbb;
     }
+
+    /* Message shown after countdown ends */
+    #end-message {
+      margin-top: 2rem;
+      font-size: 1.4rem;
+      color: #ffcc00; /* A contrasting color for emphasis */
+      display: none;  /* Hidden by default */
+    }
   </style>
 </head>
 <body>
@@ -89,7 +100,8 @@
     <h1>Coming Soon</h1>
     <p>This game will be available on Monday the 27</p>
 
-    <div class="countdown">
+    <!-- Countdown -->
+    <div class="countdown" id="countdown">
       <!-- Days -->
       <div class="countdown-item">
         <span id="days">00</span>
@@ -111,43 +123,82 @@
         <span>Seconds</span>
       </div>
     </div>
+
+    <!-- Message shown after countdown ends -->
+    <div id="end-message">
+      Please reload the page or wait a little bit
+    </div>
   </div>
 
   <script>
-    // Set the date and time we're counting down to
-    // Here: Monday, January 27, 2025, 00:00:00
+    // Set the date/time we're counting down to
+    // Example: Monday, January 27, 2025, 00:00:00
     const countDownDate = new Date("Jan 27, 2025 00:00:00").getTime();
     
+    // Create a function to launch confetti
+    function launchConfetti() {
+      // Duration for confetti in ms
+      const duration = 5 * 1000; 
+      const end = Date.now() + duration;
+
+      (function frame() {
+        // Launch a few confetti from the left edge
+        confetti({
+          particleCount: 5,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0 },
+        });
+        // Launch a few confetti from the right edge
+        confetti({
+          particleCount: 5,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1 },
+        });
+
+        // Keep going until the time is up
+        if (Date.now() < end) {
+          requestAnimationFrame(frame);
+        }
+      })();
+    }
+
     // Update the countdown every 1 second
     const timer = setInterval(function() {
-      // Get today's date and time (in milliseconds)
+      // Get current time in milliseconds
       const now = new Date().getTime();
 
-      // Find the distance between now and the countdown date
+      // Distance to the target date
       const distance = countDownDate - now;
 
-      // Calculate days, hours, minutes and seconds
+      // Calculate days, hours, minutes, and seconds
       const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-      const hours = Math.floor(
-        (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
-      );
+      const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-      // Display the results in the elements
+      // Update the countdown display
       document.getElementById("days").textContent = days < 10 ? "0" + days : days;
       document.getElementById("hours").textContent = hours < 10 ? "0" + hours : hours;
       document.getElementById("minutes").textContent = minutes < 10 ? "0" + minutes : minutes;
       document.getElementById("seconds").textContent = seconds < 10 ? "0" + seconds : seconds;
 
-      // If the countdown is over, clear the interval and optionally show a message
+      // If the countdown is finished
       if (distance < 0) {
         clearInterval(timer);
-        document.getElementById("days").textContent = "00";
-        document.getElementById("hours").textContent = "00";
+
+        // Set all values to 00
+        document.getElementById("days").textContent    = "00";
+        document.getElementById("hours").textContent   = "00";
         document.getElementById("minutes").textContent = "00";
         document.getElementById("seconds").textContent = "00";
-        // You could display a launch message here if desired
+
+        // Launch confetti
+        launchConfetti();
+
+        // Show the end message
+        document.getElementById("end-message").style.display = "block";
       }
     }, 1000);
   </script>
