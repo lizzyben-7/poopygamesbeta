@@ -691,6 +691,7 @@
     };
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
+    
     let username = localStorage.getItem('username');
     let currentRoom = null;
     let isVerifiedABen = localStorage.getItem('isVerifiedABen') === 'true';
@@ -698,6 +699,7 @@
     let unreadMessages = new Set();
     let selectedMessages = new Set();
     let isDarkMode = localStorage.getItem('darkMode') === 'true';
+    
     // DOM Elements
     const messages = document.getElementById('messages');
     const messageInput = document.getElementById('messageInput');
@@ -710,19 +712,23 @@
     const isPrivateRoomCheckbox = document.getElementById('isPrivateRoom');
     const roomPasswordGroup = document.getElementById('roomPasswordGroup');
     const adminPanel = document.getElementById('adminPanel');
+    
     // Global variable to track which chat window is sending an image
     let currentChatWindowForImage = null;
+    
     if (!username) {
       usernameModal.style.display = 'flex';
     } else {
       loadRooms();
     }
     loadRooms();
+    
     const MAX_USERNAME_LENGTH = 20;
     const MAX_MESSAGE_LENGTH = 100;
     const MAX_ROOM_NAME_LENGTH = 30;
     const MAX_SEARCH_LENGTH = 50;
     const MAX_MESSAGES_PER_ROOM = 50;
+    
     function setUsername() {
       const newUsername = usernameInput.value.trim();
       if (!newUsername) return;
@@ -730,6 +736,7 @@
         alert(`Username must be ${MAX_USERNAME_LENGTH} characters or less`);
         return;
       }
+      // For ABen or LizzyBen, show the verification modal
       if (newUsername === 'ABen' || newUsername === 'LizzyBen') {
         username = newUsername;
         localStorage.setItem('username', username);
@@ -742,6 +749,36 @@
       usernameModal.style.display = 'none';
       loadRooms();
     }
+    
+    // New verification function for ABen and LizzyBen accounts.
+    // For demonstration, the verification passwords are:
+    // - ABen: "ABenSecret"
+    // - LizzyBen: "LizzySecret"
+    function verifyABen() {
+      const passwordInput = document.getElementById('abenPasswordInput').value.trim();
+      if ((username === 'ABen' && passwordInput === 'ABenSecret') ||
+          (username === 'LizzyBen' && passwordInput === 'LizzySecret')) {
+        if (username === 'ABen') {
+          localStorage.setItem('isVerifiedABen', 'true');
+          isVerifiedABen = true;
+        } else {
+          localStorage.setItem('isVerifiedLizzyBen', 'true');
+          isVerifiedLizzyBen = true;
+        }
+        abenVerificationModal.style.display = 'none';
+        loadRooms();
+      } else {
+        alert('Incorrect verification password.');
+      }
+    }
+    
+    function hideABenVerificationModal() {
+      abenVerificationModal.style.display = 'none';
+      username = null;
+      localStorage.removeItem('username');
+      usernameModal.style.display = 'flex';
+    }
+    
     function showCreateRoomModal() {
       createRoomModal.style.display = 'flex';
     }
@@ -752,15 +789,11 @@
       joinPrivateModal.style.display = 'none';
       currentRoom = null;
     }
-    function hideABenVerificationModal() {
-      abenVerificationModal.style.display = 'none';
-      username = null;
-      localStorage.removeItem('username');
-      usernameModal.style.display = 'flex';
-    }
+    
     isPrivateRoomCheckbox.addEventListener('change', () => {
       roomPasswordGroup.style.display = isPrivateRoomCheckbox.checked ? 'block' : 'none';
     });
+    
     function createRoom() {
       const roomName = document.getElementById('roomNameInput').value.trim();
       const isPrivate = isPrivateRoomCheckbox.checked;
@@ -780,6 +813,7 @@
       hideCreateRoomModal();
       loadRooms();
     }
+    
     function loadRooms() {
       database.ref('rooms').once('value').then((snapshot) => {
         roomsList.innerHTML = '';
@@ -791,6 +825,7 @@
         });
       });
     }
+    
     function createRoomElement(room) {
       const div = document.createElement('div');
       div.className = 'room-item';
@@ -813,6 +848,7 @@
       div.onclick = () => joinRoom(room);
       return div;
     }
+    
     function joinRoom(room) {
       if (activeChats.some(chat => chat.type === 'group' && chat.room.key === room.key)) {
         return;
@@ -860,6 +896,7 @@
       });
       loadGroupMessages(chatWindow.querySelector('.messages'), room.name);
     }
+    
     function joinPrivateRoom() {
       const password = document.getElementById('joinPasswordInput').value;
       if (password === 'palmcoco' || password === currentRoom.password) {
@@ -892,6 +929,7 @@
         alert('Incorrect password!');
       }
     }
+    
     function loadGroupMessages(messagesDiv, roomName) {
       database.ref('messages').orderByChild('room').equalTo(roomName).once('value')
         .then((snapshot) => {
@@ -904,36 +942,36 @@
           messagesDiv.scrollTop = messagesDiv.scrollHeight;
         });
     }
+    
     function sendGroupMessage(button) {
-  const chatWindow = button.closest('.chat-window');
-  const input = chatWindow.querySelector('input');
-  const message = input.value.trim();
-  if (!message) return;
-  if (message.length > MAX_MESSAGE_LENGTH) {
-    alert(`Message must be ${MAX_MESSAGE_LENGTH} characters or less`);
-    return;
-  }
-  if (checkSpam(username)) {
-    return;
-  }
-  // Determine which chat window is active
-  const chatIndex = Array.from(document.querySelectorAll('.chat-window')).indexOf(chatWindow);
-  const chat = activeChats[chatIndex];
-  const messageData = {
-    username: username,
-    message: message,
-    room: chat.room.name,
-    timestamp: Date.now()
-  };
-  if (chat.type === 'group') {
-    // Push the message to Firebase then update the chat immediately
-    database.ref('messages').push(messageData).then((ref) => {
-      messageData.key = ref.key;
-      addMessageToChat(messageData, chatWindow.querySelector('.messages'));
-    });
-  }
-  input.value = '';
-}
+      const chatWindow = button.closest('.chat-window');
+      const input = chatWindow.querySelector('input');
+      const message = input.value.trim();
+      if (!message) return;
+      if (message.length > MAX_MESSAGE_LENGTH) {
+        alert(`Message must be ${MAX_MESSAGE_LENGTH} characters or less`);
+        return;
+      }
+      if (checkSpam(username)) {
+        return;
+      }
+      const chatIndex = Array.from(document.querySelectorAll('.chat-window')).indexOf(chatWindow);
+      const chat = activeChats[chatIndex];
+      const messageData = {
+        username: username,
+        message: message,
+        room: chat.room.name,
+        timestamp: Date.now()
+      };
+      if (chat.type === 'group') {
+        database.ref('messages').push(messageData).then((ref) => {
+          messageData.key = ref.key;
+          addMessageToChat(messageData, chatWindow.querySelector('.messages'));
+        });
+      }
+      input.value = '';
+    }
+    
     // New functions for image insertion and display
     function promptImageURL(button) {
       currentChatWindowForImage = button.closest('.chat-window');
@@ -944,76 +982,60 @@
       document.getElementById('imageURLInput').value = '';
     }
     function sendImageMessage() {
-  const imageUrl = document.getElementById('imageURLInput').value.trim();
-  
-  // Check if the field is empty
-  if (!imageUrl) {
-    alert("Please enter an image URL.");
-    return;
-  }
-  
-  // Reject if URL is too long
-  if (imageUrl.length > 500) {
-    alert("Image URL is too long. Please enter a valid image link.");
-    return;
-  }
-  
-  // Validate the URL using the URL constructor
-  try {
-    new URL(imageUrl);
-  } catch (e) {
-    alert("Invalid URL. Please enter a valid image link.");
-    return;
-  }
-  
-  const chatWindow = currentChatWindowForImage;
-  if (!chatWindow) {
-    alert("Chat window not found.");
-    hideImageModal();
-    return;
-  }
-  
-  // Determine which chat window (group or DM) is active
-  const chatIndex = Array.from(document.querySelectorAll('.chat-window')).indexOf(chatWindow);
-  const chat = activeChats[chatIndex];
-  if (!chat) {
-    alert("Chat not found.");
-    hideImageModal();
-    return;
-  }
-  
-  // Prepare the message data
-  const messageData = {
-    username: username,
-    image: imageUrl,
-    message: '', // No text for image messages
-    timestamp: Date.now()
-  };
-  
-  if (chat.type === 'group') {
-    // For group chats, add the room name
-    messageData.room = chat.room.name;
+      const imageUrl = document.getElementById('imageURLInput').value.trim();
+      if (!imageUrl) {
+        alert("Please enter an image URL.");
+        return;
+      }
+      if (imageUrl.length > 500) {
+        alert("Image URL is too long. Please enter a valid image link.");
+        return;
+      }
+      try {
+        new URL(imageUrl);
+      } catch (e) {
+        alert("Invalid URL. Please enter a valid image link.");
+        return;
+      }
+      const chatWindow = currentChatWindowForImage;
+      if (!chatWindow) {
+        alert("Chat window not found.");
+        hideImageModal();
+        return;
+      }
+      const chatIndex = Array.from(document.querySelectorAll('.chat-window')).indexOf(chatWindow);
+      const chat = activeChats[chatIndex];
+      if (!chat) {
+        alert("Chat not found.");
+        hideImageModal();
+        return;
+      }
+      const messageData = {
+        username: username,
+        image: imageUrl,
+        message: '',
+        timestamp: Date.now()
+      };
+      if (chat.type === 'group') {
+        messageData.room = chat.room.name;
+        database.ref('messages').push(messageData).then((ref) => {
+          messageData.key = ref.key;
+          addMessageToChat(messageData, chatWindow.querySelector('.messages'));
+          hideImageModal();
+        });
+      } else if (chat.type === 'dm') {
+        database.ref('dmMessages').child(chat.dmId).push(messageData).then((ref) => {
+          messageData.key = ref.key;
+          addMessageToChat(messageData, chatWindow.querySelector('.messages'));
+          database.ref('dms').child(chat.dmId).update({
+            lastMessage: '[Image]',
+            lastMessageTime: Date.now()
+          });
+          hideImageModal();
+        });
+      }
+    }
     
-    database.ref('messages').push(messageData).then((ref) => {
-      messageData.key = ref.key;
-      // Immediately add the message locally so it appears right away
-      addMessageToChat(messageData, chatWindow.querySelector('.messages'));
-      hideImageModal();
-    });
-  } else if (chat.type === 'dm') {
-    database.ref('dmMessages').child(chat.dmId).push(messageData).then((ref) => {
-      messageData.key = ref.key;
-      addMessageToChat(messageData, chatWindow.querySelector('.messages'));
-      // Also update the DM summary
-      database.ref('dms').child(chat.dmId).update({
-        lastMessage: '[Image]',
-        lastMessageTime: Date.now()
-      });
-      hideImageModal();
-    });
-  }
-}
-
     function addMessageToChat(data, messagesDiv = messages) {
       const messageElement = document.createElement('div');
       messageElement.className = `message ${data.username === username ? 'sent' : 'received'}`;
@@ -1059,6 +1081,7 @@
       messagesDiv.appendChild(messageElement);
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
     }
+    
     function toggleImageBlur(btn) {
       const wrapper = btn.parentElement;
       const img = wrapper.querySelector('img');
@@ -1070,9 +1093,11 @@
         btn.textContent = 'Show Image';
       }
     }
+    
     let activeChats = [];
     const MAX_CHATS = 4;
     const MIN_CHATS = 0;
+    
     function closeChatWindow(button) {
       if (activeChats.length <= MIN_CHATS) {
         alert('You must keep at least one chat window open!');
@@ -1083,6 +1108,7 @@
       activeChats.splice(index, 1);
       chatWindow.remove();
     }
+    
     function toggleTheme() {
       isDarkMode = !isDarkMode;
       localStorage.setItem('darkMode', isDarkMode);
@@ -1090,12 +1116,14 @@
       const themeSwitch = document.querySelector('.theme-switch');
       themeSwitch.textContent = isDarkMode ? '☀️' : '🌙';
     }
+    
     function signOut() {
       localStorage.removeItem('username');
       localStorage.removeItem('isVerifiedABen');
       localStorage.removeItem('isVerifiedLizzyBen');
       window.location.reload();
     }
+    
     function filterRooms(query) {
       if (query.length > MAX_SEARCH_LENGTH) {
         query = query.substring(0, MAX_SEARCH_LENGTH);
@@ -1106,12 +1134,15 @@
         room.style.display = roomName.includes(query.toLowerCase()) ? 'flex' : 'none';
       });
     }
+    
     function checkSpam(username) {
       return false;
     }
+    
     document.body.classList.toggle('dark-mode', isDarkMode);
     const themeSwitch = document.querySelector('.theme-switch');
     themeSwitch.textContent = isDarkMode ? '☀️' : '🌙';
+    
     window.onload = function() {
       const savedUsername = localStorage.getItem('username');
       if (savedUsername) {
