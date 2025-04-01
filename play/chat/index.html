@@ -905,45 +905,35 @@
         });
     }
     function sendGroupMessage(button) {
-      const chatWindow = button.closest('.chat-window');
-      const input = chatWindow.querySelector('input');
-      const message = input.value.trim();
-      if (!message) return;
-      if (message.length > MAX_MESSAGE_LENGTH) {
-        alert(`Message must be ${MAX_MESSAGE_LENGTH} characters or less`);
-        return;
-      }
-      if (checkSpam(username)) {
-        return;
-      }
-      const chatIndex = Array.from(document.querySelectorAll('.chat-window')).indexOf(chatWindow);
-      const chat = activeChats[chatIndex];
-      if (chat.type === 'group') {
-        database.ref('messages').orderByChild('room').equalTo(chat.room.name).once('value')
-          .then((snapshot) => {
-            const messages = [];
-            snapshot.forEach((childSnapshot) => {
-              messages.push(childSnapshot.val());
-            });
-            if (messages.length >= MAX_MESSAGES_PER_ROOM) {
-              database.ref('messages').orderByChild('room').equalTo(chat.room.name)
-                .limitToFirst(1).once('value')
-                .then((oldestSnapshot) => {
-                  oldestSnapshot.forEach((childSnapshot) => {
-                    database.ref('messages').child(childSnapshot.key).remove();
-                  });
-                });
-            }
-            return database.ref('messages').push({
-              username: username,
-              message: message,
-              room: chat.room.name,
-              timestamp: Date.now()
-            });
-          });
-      }
-      input.value = '';
-    }
+  const chatWindow = button.closest('.chat-window');
+  const input = chatWindow.querySelector('input');
+  const message = input.value.trim();
+  if (!message) return;
+  if (message.length > MAX_MESSAGE_LENGTH) {
+    alert(`Message must be ${MAX_MESSAGE_LENGTH} characters or less`);
+    return;
+  }
+  if (checkSpam(username)) {
+    return;
+  }
+  // Determine which chat window is active
+  const chatIndex = Array.from(document.querySelectorAll('.chat-window')).indexOf(chatWindow);
+  const chat = activeChats[chatIndex];
+  const messageData = {
+    username: username,
+    message: message,
+    room: chat.room.name,
+    timestamp: Date.now()
+  };
+  if (chat.type === 'group') {
+    // Push the message to Firebase then update the chat immediately
+    database.ref('messages').push(messageData).then((ref) => {
+      messageData.key = ref.key;
+      addMessageToChat(messageData, chatWindow.querySelector('.messages'));
+    });
+  }
+  input.value = '';
+}
     // New functions for image insertion and display
     function promptImageURL(button) {
       currentChatWindowForImage = button.closest('.chat-window');
