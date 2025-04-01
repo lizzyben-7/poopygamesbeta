@@ -3,35 +3,2433 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Google Chat</title>
-    <link rel="icon" href="https://play-lh.googleusercontent.com/cF_oWC9Io_I9smEBhjhUHkOO6vX5wMbZJgFpGny4MkMMtz25iIJEh2wASdbbEN7jseAx">
-    <script src="https://cdn.jsdelivr.net/npm/@widgetbot/html-embed"></script>
+    <title>Hall Chat</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f0f2f5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background-color: #ffffff;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .version {
+            font-size: 0.5em;
+            color: #666;
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            max-width: 1800px;
+            margin: 20px auto;
+            gap: 20px;
+            padding: 0 20px;
+        }
+
+        .rooms-sidebar {
+            width: 300px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 100px);
+            overflow: hidden;
+        }
+
+        .rooms-list {
+            margin-top: 15px;
+            flex: 1;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #0084ff #f0f2f5;
+            padding-right: 5px;
+        }
+
+        .rooms-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .rooms-list::-webkit-scrollbar-track {
+            background: #f0f2f5;
+            border-radius: 4px;
+        }
+
+        .rooms-list::-webkit-scrollbar-thumb {
+            background-color: #0084ff;
+            border-radius: 4px;
+        }
+
+        .dark-mode .rooms-list::-webkit-scrollbar-track {
+            background: #3d3d3d;
+        }
+
+        .dark-mode .rooms-list::-webkit-scrollbar-thumb {
+            background-color: #0084ff;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #e4e6eb;
+            border-radius: 5px;
+            flex-shrink: 0;
+        }
+
+        .create-room-btn {
+            width: 100%;
+            padding: 10px;
+            background-color: #0084ff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 15px;
+            flex-shrink: 0;
+        }
+
+        .room-item {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+        }
+
+        .room-item:hover {
+            background-color: #f0f2f5;
+        }
+
+        .room-item.active {
+            background-color: #e3f2fd;
+        }
+
+        .room-item i {
+            color: #666;
+        }
+
+        .notification-dot {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 8px;
+            height: 8px;
+            background-color: #0084ff;
+            border-radius: 50%;
+            display: none;
+        }
+
+        .room-item.has-notification .notification-dot {
+            display: block;
+        }
+
+        .chat-container {
+            flex: 1;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            padding: 15px;
+            border-bottom: 1px solid #e4e6eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .refresh-btn {
+            background-color: #ff4444;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: none;
+            font-size: 0.9em;
+        }
+
+        .refresh-btn.visible {
+            display: block;
+        }
+
+        .refresh-btn:hover {
+            background-color: #cc0000;
+        }
+
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            max-width: 70%;
+            position: relative;
+        }
+
+        .message.sent {
+            margin-left: auto;
+        }
+
+        .message-content {
+            padding: 10px 15px;
+            border-radius: 15px;
+            background-color: #f0f2f5;
+        }
+
+        .message.sent .message-content {
+            background-color: #0084ff;
+            color: white;
+        }
+
+        .message-username {
+            font-size: 0.8em;
+            color: #666;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            justify-content: space-between;
+        }
+
+        .message-time {
+            font-size: 0.7em;
+            color: #999;
+        }
+
+        .message-actions {
+            display: flex;
+            gap: 5px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .message:hover .message-actions {
+            opacity: 1;
+        }
+
+        .delete-btn {
+            color: #ff4444;
+            cursor: pointer;
+            font-size: 0.8em;
+        }
+
+        .delete-btn:hover {
+            color: #cc0000;
+        }
+
+        .room-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .delete-room-btn {
+            color: #ff4444;
+            cursor: pointer;
+            font-size: 0.9em;
+            display: none;
+            margin-left: 10px;
+        }
+
+        .room-item:hover .delete-room-btn {
+            display: inline-block;
+        }
+
+        .verified-badge {
+            color: #0084ff;
+            margin-left: 5px;
+            display: inline-block;
+        }
+
+        .input-area {
+            padding: 20px;
+            border-top: 1px solid #e4e6eb;
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-area input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #e4e6eb;
+            border-radius: 20px;
+            outline: none;
+        }
+
+        .input-area button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 20px;
+            background-color: #0084ff;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .input-area button:hover {
+            background-color: #0073e6;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .modal-content input {
+            width: 100%;
+            padding: 8px;
+            margin: 10px 0;
+            border: 1px solid #e4e6eb;
+            border-radius: 5px;
+        }
+
+        .modal-content button {
+            width: 100%;
+            padding: 10px;
+            background-color: #0084ff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .chat-windows {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            flex: 1;
+            padding: 20px;
+            height: calc(100vh - 100px);
+            overflow-y: auto;
+        }
+
+        .chat-window {
+            min-width: 400px;
+            max-width: none;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .chat-window .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            height: calc(100% - 120px);
+            scrollbar-width: thin;
+            scrollbar-color: #0084ff #f0f2f5;
+        }
+
+        .chat-window .messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-window .messages::-webkit-scrollbar-track {
+            background: #f0f2f5;
+            border-radius: 4px;
+        }
+
+        .chat-window .messages::-webkit-scrollbar-thumb {
+            background-color: #0084ff;
+            border-radius: 4px;
+        }
+
+        .dark-mode .chat-window .messages::-webkit-scrollbar-track {
+            background: #3d3d3d;
+        }
+
+        .dark-mode .chat-window .messages::-webkit-scrollbar-thumb {
+            background-color: #0084ff;
+        }
+
+        .close-window {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 1.2em;
+            z-index: 1;
+        }
+
+        .close-window:hover {
+            color: #ff4444;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #e4e6eb;
+            background: white;
+            border-radius: 10px 10px 0 0;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab.active {
+            border-bottom-color: #0084ff;
+            color: #0084ff;
+        }
+
+        .dm-list {
+            margin-top: 15px;
+        }
+
+        .dm-item {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dm-item:hover {
+            background-color: #f0f2f5;
+        }
+
+        .dm-item.active {
+            background-color: #e3f2fd;
+        }
+
+        .new-dm-btn {
+            width: 100%;
+            padding: 10px;
+            background-color: #0084ff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 15px;
+        }
+
+        .admin-panel {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: none;
+            z-index: 1000;
+            min-width: 200px;
+        }
+
+        .admin-panel.visible {
+            display: block;
+        }
+
+        .admin-panel h3 {
+            margin-bottom: 10px;
+        }
+
+        .admin-panel button {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            background-color: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .restart-servers-dropdown {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            background: #f0f2f5;
+            border-radius: 5px;
+        }
+
+        .restart-servers-dropdown.visible {
+            display: block;
+        }
+
+        .restart-servers-search {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #e4e6eb;
+            border-radius: 5px;
+        }
+
+        .restart-servers-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+        }
+
+        .restart-servers-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px;
+            cursor: pointer;
+        }
+
+        .restart-servers-item:hover {
+            background-color: #e4e6eb;
+        }
+
+        .restart-servers-checkbox {
+            margin: 0;
+        }
+
+        .restart-servers-refresh {
+            width: 100%;
+            padding: 8px;
+            background-color: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .dark-mode .restart-servers-dropdown {
+            background: #3d3d3d;
+        }
+
+        .dark-mode .restart-servers-search {
+            background-color: #2d2d2d;
+            color: white;
+            border-color: #4d4d4d;
+        }
+
+        .dark-mode .restart-servers-item:hover {
+            background-color: #4d4d4d;
+        }
+
+        .dm-btn {
+            color: #0084ff;
+            cursor: pointer;
+            font-size: 0.8em;
+            margin-left: 5px;
+        }
+
+        .dm-btn:hover {
+            color: #0073e6;
+        }
+
+        .sign-out-btn {
+            padding: 8px 16px;
+            background-color: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 20px;
+        }
+
+        .sign-out-btn:hover {
+            background-color: #cc0000;
+        }
+
+        .ban-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1001;
+        }
+
+        .ban-modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        .ban-search {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #e4e6eb;
+            border-radius: 5px;
+        }
+
+        .ban-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+
+        .ban-item {
+            padding: 8px;
+            cursor: pointer;
+            border-bottom: 1px solid #e4e6eb;
+        }
+
+        .ban-item:hover {
+            background-color: #f0f2f5;
+        }
+
+        .ban-duration {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .ban-duration input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #e4e6eb;
+            border-radius: 5px;
+        }
+
+        .ban-reason {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #e4e6eb;
+            border-radius: 5px;
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #0084ff;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+
+        .banned-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .banned-message {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 500px;
+        }
+
+        .create-room-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 10px 0;
+        }
+
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            height: calc(100% - 120px);
+        }
+
+        .message-checkbox {
+            position: absolute;
+            left: -25px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: none;
+        }
+
+        .message:hover .message-checkbox {
+            display: block;
+        }
+
+        .message.selected {
+            background-color: rgba(0, 132, 255, 0.1);
+        }
+
+        .report-btn {
+            color: #ff4444;
+            cursor: pointer;
+            font-size: 0.8em;
+            margin-left: 5px;
+            display: none;
+        }
+
+        .message:hover .report-btn {
+            display: inline-block;
+        }
+
+        .mass-delete-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #ff4444;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: none;
+            z-index: 1000;
+        }
+
+        .mass-delete-btn.visible {
+            display: block;
+        }
+
+        .announcement-banner {
+            background-color: #ffa500;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            position: relative;
+            display: none;
+        }
+
+        .announcement-banner.visible {
+            display: block;
+        }
+
+        .announcement-banner .close-btn {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: white;
+        }
+
+        .dark-mode {
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+
+        .dark-mode .header,
+        .dark-mode .chat-container,
+        .dark-mode .chat-window,
+        .dark-mode .rooms-sidebar,
+        .dark-mode .modal-content,
+        .dark-mode .admin-panel {
+            background-color: #2d2d2d;
+            color: #ffffff;
+        }
+
+        .dark-mode .message-content {
+            background-color: #3d3d3d;
+            color: #ffffff;
+        }
+
+        .dark-mode .message.sent .message-content {
+            background-color: #0084ff;
+        }
+
+        .dark-mode .input-area input {
+            background-color: #3d3d3d;
+            color: #ffffff;
+            border-color: #4d4d4d;
+        }
+
+        .dark-mode .room-item:hover,
+        .dark-mode .dm-item:hover {
+            background-color: #3d3d3d;
+        }
+
+        .theme-switch {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 1.5em;
+        }
+
+        .dark-mode .theme-switch {
+            color: #ffffff;
+        }
+
+        .message-content img {
+            max-width: 300px;
+            max-height: 300px;
+            border-radius: 10px;
+            cursor: pointer;
+            object-fit: contain;
+            background-color: #f0f2f5;
+        }
+
+        .dark-mode .message-content img {
+            background-color: #3d3d3d;
+        }
+
+        .blurred-image {
+            filter: blur(20px);
+            transition: filter 0.3s ease;
+        }
+
+        .blurred-image.unblurred {
+            filter: none;
+        }
+
+        .show-image-btn {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #0084ff;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2em;
+            z-index: 1;
+            transition: opacity 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .show-image-btn:hover {
+            background-color: #0073e6;
+        }
+
+        .show-image-btn.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .image-container {
+            position: relative;
+            display: inline-block;
+            margin: 10px 0;
+        }
+
+        .dark-mode .message-content img {
+            border: 1px solid #4d4d4d;
+        }
+    </style>
 </head>
 <body>
+    <div class="header">
+        <h1>Hall Chat <span class="version">Version 1.13</span></h1>
+        <button class="theme-switch" onclick="toggleTheme()">🌙</button>
+        <button class="sign-out-btn" onclick="signOut()">Sign Out</button>
+    </div>
 
-<widgetbot
-    server="1109923341130801175"
-    channel="1109923380062343258"
-    id="widgetbot-container"
-></widgetbot>
+    <div class="container">
+        <div class="rooms-sidebar">
+            <input type="text" class="search-box" placeholder="Search rooms..." onkeyup="filterRooms(this.value)">
+            <button class="create-room-btn" onclick="showCreateRoomModal()">Create Room</button>
+            <div class="rooms-list" id="roomsList">
+                <!-- Rooms will be populated here -->
+            </div>
+        </div>
 
-<script>
-    function setWidgetSize() {
-        var widgetContainer = document.getElementById('widgetbot-container');
-        var screenWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
-        var screenHeight = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+        <div class="chat-windows" id="chatWindows">
+            <!-- Chat windows will be added here -->
+        </div>
+    </div>
 
-        // Set the widget width and height to match the screen size
-        widgetContainer.setAttribute('width', screenWidth.toString());
-        widgetContainer.setAttribute('height', screenHeight.toString());
-    }
+    <!-- Username Modal -->
+    <div class="modal" id="usernameModal">
+        <div class="modal-content">
+            <h2>Enter Your Name</h2>
+            <input type="text" id="usernameInput" placeholder="Your name">
+            <button onclick="setUsername()">Start Chatting</button>
+        </div>
+    </div>
 
-    // Call the function initially
-    setWidgetSize();
+    <!-- Create Room Modal -->
+    <div class="modal" id="createRoomModal">
+        <div class="modal-content">
+            <h2>Create New Room</h2>
+            <div class="create-room-checkbox">
+                <input type="text" id="roomNameInput" placeholder="Room name">
+                <label>
+                    <input type="checkbox" id="isPrivateRoom"> Private Room
+                </label>
+            </div>
+            <div id="roomPasswordGroup" style="display: none;">
+                <input type="password" id="roomPasswordInput" placeholder="Room password">
+            </div>
+            <button onclick="createRoom()">Create Room</button>
+            <button onclick="hideCreateRoomModal()" style="background-color: #e4e6eb; color: #1a1a1a;">Cancel</button>
+        </div>
+    </div>
 
-    // Update the widget size when the window is resized
-    window.addEventListener('resize', setWidgetSize);
-</script>
+    <!-- Join Private Room Modal -->
+    <div class="modal" id="joinPrivateModal">
+        <div class="modal-content">
+            <h2>Join Private Room</h2>
+            <p id="joinRoomName"></p>
+            <input type="password" id="joinPasswordInput" placeholder="Enter room password">
+            <button onclick="joinPrivateRoom()">Join Room</button>
+            <button onclick="hideJoinPrivateModal()" style="background-color: #e4e6eb; color: #1a1a1a;">Cancel</button>
+        </div>
+    </div>
 
+    <!-- ABen Verification Modal -->
+    <div class="modal" id="abenVerificationModal">
+        <div class="modal-content">
+            <h2>Verify ABen Account</h2>
+            <p>Enter the password to verify your ABen account:</p>
+            <input type="password" id="abenPasswordInput" placeholder="Enter password">
+            <button onclick="verifyABen()">Verify</button>
+            <button onclick="hideABenVerificationModal()" style="background-color: #e4e6eb; color: #1a1a1a;">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Ban Modal -->
+    <div class="ban-modal" id="banModal">
+        <div class="ban-modal-content">
+            <h2>Ban User</h2>
+            <input type="text" class="ban-search" placeholder="Search users..." onkeyup="filterBanList(this.value)">
+            <div class="ban-list" id="banList">
+                <!-- Users will be populated here -->
+            </div>
+            <div class="ban-duration">
+                <input type="number" id="banDuration" placeholder="Duration (hours)">
+                <button onclick="setBanDuration('forever')">Forever</button>
+            </div>
+            <input type="text" class="ban-reason" id="banReason" placeholder="Reason for ban">
+            <button onclick="confirmBan()">Ban User</button>
+            <button onclick="hideBanModal()" style="background-color: #e4e6eb; color: #1a1a1a;">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification"></div>
+
+    <!-- Banned Overlay -->
+    <div class="banned-overlay" id="bannedOverlay">
+        <div class="banned-message">
+            <h2>You have been banned</h2>
+            <p id="banMessage"></p>
+            <p id="banCountdown"></p>
+        </div>
+    </div>
+
+    <!-- Admin Panel -->
+    <div class="admin-panel" id="adminPanel">
+        <h3>Admin Panel</h3>
+        <button onclick="showBanModal()">Ban User</button>
+        <button onclick="toggleRestartServers()">Restart Servers</button>
+        <div class="restart-servers-dropdown" id="restartServersDropdown">
+            <input type="text" class="restart-servers-search" placeholder="Search rooms..." onkeyup="filterRestartServers(this.value)">
+            <div class="restart-servers-list" id="restartServersList">
+                <!-- Rooms will be populated here -->
+            </div>
+            <button class="restart-servers-refresh" onclick="refreshSelectedRooms()">Refresh Selected</button>
+        </div>
+    </div>
+
+    <!-- Announcement Banner -->
+    <div class="announcement-banner" id="announcementBanner">
+        <span class="close-btn" onclick="closeAnnouncement()">×</span>
+        We need to lock in and be nice to each other (aymazing) or else we'll all get in trouble if whps finds this website.
+    </div>
+
+    <!-- Mass Delete Button -->
+    <div class="mass-delete-btn" id="massDeleteBtn" onclick="deleteSelectedMessages()">
+        Delete Selected Messages
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAk0TC8kfFseOJ2pMPyUhCicagtro8HoHA",
+            authDomain: "chat-26c4e.firebaseapp.com",
+            databaseURL: "https://chat-26c4e-default-rtdb.firebaseio.com",
+            projectId: "chat-26c4e",
+            storageBucket: "chat-26c4e.firebasestorage.app",
+            messagingSenderId: "743283116676",
+            appId: "1:743283116676:web:18390431dbe191181750d1"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        let username = localStorage.getItem('username');
+        let currentRoom = null;
+        let isVerifiedABen = localStorage.getItem('isVerifiedABen') === 'true';
+        let isVerifiedLizzyBen = localStorage.getItem('isVerifiedLizzyBen') === 'true';
+        let unreadMessages = new Set();
+        let selectedMessages = new Set();
+        let isDarkMode = localStorage.getItem('darkMode') === 'true';
+
+        // DOM Elements
+        const messages = document.getElementById('messages');
+        const messageInput = document.getElementById('messageInput');
+        const usernameModal = document.getElementById('usernameModal');
+        const usernameInput = document.getElementById('usernameInput');
+        const roomsList = document.getElementById('roomsList');
+        const createRoomModal = document.getElementById('createRoomModal');
+        const joinPrivateModal = document.getElementById('joinPrivateModal');
+        const abenVerificationModal = document.getElementById('abenVerificationModal');
+        const isPrivateRoomCheckbox = document.getElementById('isPrivateRoom');
+        const roomPasswordGroup = document.getElementById('roomPasswordGroup');
+        const adminPanel = document.getElementById('adminPanel');
+
+        // Show username modal if no username is set
+        if (!username) {
+            usernameModal.style.display = 'flex';
+        } else {
+            loadRooms();
+        }
+
+        // Load rooms
+        loadRooms();
+
+        // Add cookie functions
+        function setCookie(name, value, days) {
+            let expires = "";
+            if (days) {
+                const date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = "; expires=" + date.toUTCString();
+            }
+            document.cookie = name + "=" + (value || "") + expires + "; path=/";
+        }
+
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for(let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+
+        function deleteCookie(name) {
+            document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+        }
+
+        const MAX_USERNAME_LENGTH = 20;
+        const MAX_MESSAGE_LENGTH = 100;
+        const MAX_ROOM_NAME_LENGTH = 30;
+        const MAX_SEARCH_LENGTH = 50;
+        const MAX_MESSAGES_PER_ROOM = 50;
+
+        // Add filter patterns
+        const harmfulPatterns = {
+            hateSpeech: /(n[i1]gg[ae]r|f[a@]gg[o0]t|k[i1]k[e3]|ch[i1]nk|w[e3]tback|sp[i1]c|g[o0]0k|tr[a@]nny|r[e3]t[a@]rd)/gi,
+            sexual: /(r[a@]p[e3]|p[e3]d[o0]|m[o0]l[e3]st|p[o0]rn|n[u]d[e3]s?|str[i1]p|0nlyf[a@]ns|p[o0]rn[o0]|l[e3]wd)/gi,
+            violence: /(k[i1]ll|m[u]rd[e3]r|st[a@]b|b[o0]mb|t[o0]rt[u]r[e3]|s[u]ic[i1]d[e3]|t[o0]rt[u]r[e3]|g[o0]r[e3])/gi,
+            drugs: /(w[e3][e3]d|m[a@]r[i1]j[u][a@]n[a@]|c[o0]c[a@][i1]n[e3]|h[e3]r[o0][i1]n|m[e3]th|lsd|[a@]c[i1]d|mdm[a@]|x[a@]n[a@]x)/gi
+        };
+
+        // Update name filter to allow exact "ABen" match
+        const abenVariations = /^[a@][b8][e3]n(?![a-zA-Z0-9])/i;
+
+        function filterHarmfulContent(text) {
+            for (const [category, pattern] of Object.entries(harmfulPatterns)) {
+                if (pattern.test(text)) {
+                    return true; // Contains harmful content
+                }
+            }
+            return false;
+        }
+
+        function setUsername() {
+            const newUsername = usernameInput.value.trim();
+            if (!newUsername) return;
+
+            if (newUsername.length > MAX_USERNAME_LENGTH) {
+                alert(`Username must be ${MAX_USERNAME_LENGTH} characters or less`);
+                return;
+            }
+
+            // Block ABen Bot username
+            if (newUsername === 'ABen Bot') {
+                alert('This username is reserved for the bot');
+                return;
+            }
+
+            // Allow exact "ABen" username
+            if (newUsername === 'ABen' || newUsername === 'LizzyBen') {
+                username = newUsername;
+                localStorage.setItem('username', username);
+                setCookie('username', username, 30);
+                usernameModal.style.display = 'none';
+                abenVerificationModal.style.display = 'flex';
+                return;
+            }
+
+            // Check for variations only if not exact "ABen"
+            if (abenVariations.test(newUsername)) {
+                alert('This username is too similar to ABen');
+                return;
+            }
+
+            username = newUsername;
+            localStorage.setItem('username', username);
+            setCookie('username', username, 30);
+            usernameModal.style.display = 'none';
+            loadRooms();
+        }
+
+        function showCreateRoomModal() {
+            createRoomModal.style.display = 'flex';
+        }
+
+        function hideCreateRoomModal() {
+            createRoomModal.style.display = 'none';
+        }
+
+        function hideJoinPrivateModal() {
+            joinPrivateModal.style.display = 'none';
+            currentRoom = null;
+        }
+
+        function hideABenVerificationModal() {
+            abenVerificationModal.style.display = 'none';
+            username = null;
+            localStorage.removeItem('username');
+            usernameModal.style.display = 'flex';
+        }
+
+        isPrivateRoomCheckbox.addEventListener('change', () => {
+            roomPasswordGroup.style.display = isPrivateRoomCheckbox.checked ? 'block' : 'none';
+        });
+
+        function createRoom() {
+            const roomName = document.getElementById('roomNameInput').value.trim();
+            const isPrivate = isPrivateRoomCheckbox.checked;
+            const password = isPrivate ? document.getElementById('roomPasswordInput').value : null;
+
+            if (!roomName) return;
+
+            if (roomName.length > MAX_ROOM_NAME_LENGTH) {
+                alert(`Room name must be ${MAX_ROOM_NAME_LENGTH} characters or less`);
+                return;
+            }
+
+            if (filterHarmfulContent(roomName)) {
+                alert('Room name contains inappropriate content');
+                return;
+            }
+
+            database.ref('rooms').push({
+                name: roomName,
+                isPrivate: isPrivate,
+                password: password,
+                createdBy: username,
+                timestamp: Date.now()
+            });
+
+            hideCreateRoomModal();
+            loadRooms();
+        }
+
+        function loadRooms() {
+            database.ref('rooms').once('value')
+                .then((snapshot) => {
+                    roomsList.innerHTML = '';
+                    snapshot.forEach((childSnapshot) => {
+                        const room = childSnapshot.val();
+                        room.key = childSnapshot.key;
+                        const roomElement = createRoomElement(room);
+                        roomsList.appendChild(roomElement);
+                    });
+                });
+        }
+
+        function createRoomElement(room) {
+            const div = document.createElement('div');
+            div.className = 'room-item';
+            if (unreadMessages.has(room.key)) {
+                div.classList.add('has-notification');
+            }
+            
+            const deleteButton = (isVerifiedABen || isVerifiedLizzyBen) ? 
+                `<span class="delete-room-btn" onclick="event.stopPropagation(); deleteRoom('${room.key}')">
+                    <i class="fas fa-trash"></i>
+                </span>` : '';
+
+            div.innerHTML = `
+                <span>
+                    <i class="fas ${room.isPrivate ? 'fa-lock' : 'fa-comments'}"></i>
+                    ${room.name}
+                </span>
+                ${deleteButton}
+                <div class="notification-dot"></div>
+            `;
+            div.onclick = () => joinRoom(room);
+            return div;
+        }
+
+        function joinRoom(room) {
+            // Check if room is already open
+            if (activeChats.some(chat => chat.type === 'group' && chat.room.key === room.key)) {
+                return;
+            }
+
+            if (room.isPrivate) {
+                currentRoom = room;
+                document.getElementById('joinRoomName').textContent = `Enter password for ${room.name}`;
+                joinPrivateModal.style.display = 'flex';
+                return;
+            }
+
+            if (activeChats.length >= MAX_CHATS) {
+                alert('Maximum number of chats reached!');
+                return;
+            }
+
+            // Remove notification dot when joining room
+            unreadMessages.delete(room.key);
+            const roomElement = document.querySelector(`.room-item[data-room-key="${room.key}"]`);
+            if (roomElement) {
+                roomElement.classList.remove('has-notification');
+            }
+
+            const chatWindow = document.createElement('div');
+            chatWindow.className = 'chat-window';
+            chatWindow.setAttribute('data-room-key', room.key);
+            chatWindow.innerHTML = `
+                <button class="close-window" onclick="closeChatWindow(this)">×</button>
+                <div class="chat-header">
+                    <h2>${room.name}</h2>
+                    <button class="refresh-btn" onclick="refreshRoom('${room.key}')">Refresh</button>
+                </div>
+                <div class="messages"></div>
+                <div class="input-area">
+                    <input type="text" placeholder="Type your message...">
+                    <button onclick="sendGroupMessage(this)">Send</button>
+                </div>
+            `;
+
+            // Show refresh button for mods
+            if (isVerifiedABen || isVerifiedLizzyBen) {
+                chatWindow.querySelector('.refresh-btn').classList.add('visible');
+            }
+
+            document.getElementById('chatWindows').appendChild(chatWindow);
+            activeChats.push({
+                type: 'group',
+                room: room,
+                roomKey: room.key
+            });
+
+            loadGroupMessages(chatWindow.querySelector('.messages'), room.name);
+        }
+
+        function joinPrivateRoom() {
+            const password = document.getElementById('joinPasswordInput').value;
+            if (password === 'palmcoco' || password === currentRoom.password) {
+                if (activeChats.length >= MAX_CHATS) {
+                    alert('Maximum number of chats reached!');
+                    return;
+                }
+
+                const chatWindow = document.createElement('div');
+                chatWindow.className = 'chat-window';
+                chatWindow.innerHTML = `
+                    <button class="close-window" onclick="closeChatWindow(this)">×</button>
+                    <div class="chat-header">
+                        <h2>${currentRoom.name}</h2>
+                    </div>
+                    <div class="messages"></div>
+                    <div class="input-area">
+                        <input type="text" placeholder="Type your message...">
+                        <button onclick="sendGroupMessage(this)">Send</button>
+                    </div>
+                `;
+
+                document.getElementById('chatWindows').appendChild(chatWindow);
+                activeChats.push({
+                    type: 'group',
+                    room: currentRoom,
+                    roomKey: currentRoom.key
+                });
+
+                loadGroupMessages(chatWindow.querySelector('.messages'), currentRoom.name);
+                joinPrivateModal.style.display = 'none';
+            } else {
+                alert('Incorrect password!');
+            }
+        }
+
+        function loadGroupMessages(messagesDiv, roomName) {
+            database.ref('messages').orderByChild('room').equalTo(roomName).once('value')
+                .then((snapshot) => {
+                    messagesDiv.innerHTML = '';
+                    snapshot.forEach((childSnapshot) => {
+                        const data = childSnapshot.val();
+                        data.key = childSnapshot.key;
+                        addMessageToChat(data, messagesDiv);
+                    });
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                });
+        }
+
+        function sendGroupMessage(button) {
+            const chatWindow = button.closest('.chat-window');
+            const input = chatWindow.querySelector('input');
+            const message = input.value.trim();
+            if (!message) return;
+
+            if (message.length > MAX_MESSAGE_LENGTH) {
+                alert(`Message must be ${MAX_MESSAGE_LENGTH} characters or less`);
+                return;
+            }
+
+            if (filterHarmfulContent(message)) {
+                alert('Message contains inappropriate content');
+                return;
+            }
+
+            // Check for spam
+            if (checkSpam(username)) {
+                return;
+            }
+
+            const chatIndex = Array.from(document.querySelectorAll('.chat-window')).indexOf(chatWindow);
+            const chat = activeChats[chatIndex];
+
+            if (chat.type === 'group') {
+                // Start ABen Bot when someone sends a message
+                startABenBot();
+
+                // Check message count before adding new message
+                database.ref('messages').orderByChild('room').equalTo(chat.room.name).once('value')
+                    .then((snapshot) => {
+                        const messages = [];
+                        snapshot.forEach((childSnapshot) => {
+                            messages.push(childSnapshot.val());
+                        });
+
+                        // If we're at the limit, delete the oldest message
+                        if (messages.length >= MAX_MESSAGES_PER_ROOM) {
+                            const oldestMessage = messages[0];
+                            database.ref('messages').orderByChild('room').equalTo(chat.room.name)
+                                .limitToFirst(1).once('value')
+                                .then((oldestSnapshot) => {
+                                    oldestSnapshot.forEach((childSnapshot) => {
+                                        database.ref('messages').child(childSnapshot.key).remove();
+                                    });
+                                });
+                        }
+
+                        // Add the new message
+                        return database.ref('messages').push({
+                            username: username,
+                            message: message,
+                            room: chat.room.name,
+                            timestamp: Date.now()
+                        });
+                    });
+            }
+
+            input.value = '';
+        }
+
+        // Listen for new messages
+        database.ref('messages').on('child_added', (snapshot) => {
+            const data = snapshot.val();
+            data.key = snapshot.key;
+            
+            // Find all chat windows that match this room
+            const chatWindows = document.querySelectorAll('.chat-window');
+            let messageAdded = false;
+            
+            chatWindows.forEach((chatWindow, index) => {
+                const chat = activeChats[index];
+                if (chat && chat.type === 'group' && chat.room.name === data.room) {
+                    addMessageToChat(data, chatWindow.querySelector('.messages'));
+                    messageAdded = true;
+                }
+            });
+
+            // If message wasn't added to any window, update notification count
+            if (!messageAdded && data.username !== username) {
+                const currentCount = unreadCounts.get(data.room) || 0;
+                unreadCounts.set(data.room, currentCount + 1);
+                updateNotificationDot(data.room, currentCount + 1);
+            }
+        });
+
+        function deleteRoom(roomKey) {
+            if (!isVerifiedABen && !isVerifiedLizzyBen) return;
+            
+            if (confirm('Are you sure you want to delete this room? This will delete all messages in it.')) {
+                // First get the room name
+                database.ref('rooms').child(roomKey).once('value')
+                    .then((snapshot) => {
+                        const room = snapshot.val();
+                        if (!room) return;
+
+                        // Delete all messages in the room
+                        return database.ref('messages').orderByChild('room').equalTo(room.name).once('value')
+                            .then((messagesSnapshot) => {
+                                const updates = {};
+                                messagesSnapshot.forEach((childSnapshot) => {
+                                    updates[childSnapshot.key] = null;
+                                });
+                                return database.ref('messages').update(updates);
+                            })
+                            .then(() => {
+                                // Then delete the room
+                                return database.ref('rooms').child(roomKey).remove();
+                            });
+                    })
+                    .then(() => {
+                        // Remove the room from active chats
+                        activeChats = activeChats.filter(chat => chat.roomKey !== roomKey);
+                        // Close any open windows for this room
+                        const chatWindows = document.querySelectorAll('.chat-window');
+                        chatWindows.forEach((chatWindow, index) => {
+                            if (activeChats[index] && activeChats[index].roomKey === roomKey) {
+                                chatWindow.remove();
+                            }
+                        });
+                        loadRooms();
+                    })
+                    .catch((error) => {
+                        console.error('Error deleting room:', error);
+                        alert('Error deleting room');
+                    });
+            }
+        }
+
+        function deleteMessage(messageKey) {
+            if (!isVerifiedABen && !isVerifiedLizzyBen) return;
+            
+            if (confirm('Are you sure you want to delete this message?')) {
+                database.ref('messages').child(messageKey).remove()
+                    .then(() => {
+                        console.log('Message deleted successfully');
+                        // Remove the message from the UI
+                        const messageElement = document.querySelector(`[data-message-key="${messageKey}"]`);
+                        if (messageElement) {
+                            messageElement.remove();
+                        }
+                    })
+                    .catch((error) => {
+                        console.error('Error deleting message:', error);
+                        alert('Error deleting message');
+                    });
+            }
+        }
+
+        function addMessageToChat(data, messagesDiv = messages) {
+            const messageElement = document.createElement('div');
+            messageElement.className = `message ${data.username === username ? 'sent' : 'received'}`;
+            messageElement.setAttribute('data-message-key', data.key || '');
+            
+            // Update verified badge logic
+            const verifiedBadge = (data.username === 'ABen' || data.username === 'LizzyBen' || data.username === 'ABen Bot') ? 
+                '<i class="fas fa-check-circle verified-badge"></i>' : '';
+            
+            const date = new Date(data.timestamp);
+            const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            const deleteButton = (isVerifiedABen || isVerifiedLizzyBen) ? 
+                `<span class="delete-btn" onclick="deleteMessage('${data.key || ''}')">
+                    <i class="fas fa-trash"></i>
+                </span>` : '';
+
+            const checkbox = (isVerifiedABen || isVerifiedLizzyBen) ?
+                `<input type="checkbox" class="message-checkbox" onchange="toggleMessageSelection('${data.key || ''}')">` : '';
+
+            const reportButton = !(isVerifiedABen || isVerifiedLizzyBen) ?
+                `<span class="report-btn" onclick="reportMessage('${data.key || ''}', '${data.username}', '${data.message}')">
+                    <i class="fas fa-flag"></i>
+                </span>` : '';
+
+            let messageContent = data.message;
+            
+            // Check if the message is an image URL (including base64)
+            if (data.message.match(/\.(jpg|jpeg|png|gif|webp)$/i) || data.message.startsWith('data:image/')) {
+                messageContent = `
+                    <div class="image-container">
+                        <img src="${data.message}" class="blurred-image" onclick="toggleImageBlur(this)">
+                        <button class="show-image-btn" onclick="toggleImageBlur(this.previousElementSibling)">Show</button>
+                    </div>
+                `;
+            }
+
+            messageElement.innerHTML = `
+                ${checkbox}
+                <div class="message-username">
+                    <span>
+                        ${data.username}
+                        ${verifiedBadge}
+                        ${reportButton}
+                    </span>
+                    <span class="message-time">${timeString}</span>
+                </div>
+                <div class="message-content">
+                    ${messageContent}
+                    ${deleteButton}
+                </div>
+            `;
+            messagesDiv.appendChild(messageElement);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function toggleImageBlur(img) {
+            if (img.classList.contains('blurred-image')) {
+                img.classList.toggle('unblurred');
+                const showBtn = img.nextElementSibling;
+                if (showBtn && showBtn.classList.contains('show-image-btn')) {
+                    showBtn.classList.toggle('hidden');
+                }
+            }
+        }
+
+        let activeChats = [];
+        const MAX_CHATS = 4;
+        const MIN_CHATS = 0;
+
+        // Show admin panel if user is verified ABen or LizzyBen
+        if (isVerifiedABen || isVerifiedLizzyBen) {
+            adminPanel.classList.add('visible');
+        }
+
+        function switchTab(tab) {
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+
+            if (tab === 'groups') {
+                groupsTab.style.display = 'block';
+                dmsTab.style.display = 'none';
+            } else {
+                groupsTab.style.display = 'none';
+                dmsTab.style.display = 'block';
+                loadDMs();
+            }
+        }
+
+        function showNewDMModal() {
+            newDMModal.style.display = 'flex';
+        }
+
+        function hideNewDMModal() {
+            newDMModal.style.display = 'none';
+        }
+
+        function createDM() {
+            const targetUsername = document.getElementById('dmUsernameInput').value.trim();
+            if (!targetUsername || targetUsername === username) return;
+
+            const dmId = [username, targetUsername].sort().join('_');
+            database.ref('dms').child(dmId).set({
+                participants: [username, targetUsername],
+                lastMessage: '',
+                lastMessageTime: Date.now(),
+                createdBy: username,
+                timestamp: Date.now()
+            });
+
+            hideNewDMModal();
+            loadDMs();
+        }
+
+        function loadDMs() {
+            database.ref('dms').once('value')
+                .then((snapshot) => {
+                    dmList.innerHTML = '';
+                    snapshot.forEach((childSnapshot) => {
+                        const dm = childSnapshot.val();
+                        if (dm.participants.includes(username)) {
+                            const otherUser = dm.participants.find(p => p !== username);
+                            const dmElement = createDMElement(dm, otherUser);
+                            dmList.appendChild(dmElement);
+                        }
+                    });
+                });
+        }
+
+        function createDMElement(dm, otherUser) {
+            const div = document.createElement('div');
+            div.className = 'dm-item';
+            div.innerHTML = `
+                <i class="fas fa-user"></i>
+                <span>${otherUser}</span>
+            `;
+            div.onclick = () => openDM(dm, otherUser);
+            return div;
+        }
+
+        function openDM(dm, otherUser) {
+            if (activeChats.length >= MAX_CHATS) {
+                alert('Maximum number of chats reached!');
+                return;
+            }
+
+            const chatWindow = document.createElement('div');
+            chatWindow.className = 'chat-window';
+            chatWindow.innerHTML = `
+                <button class="close-window" onclick="closeChatWindow(this)">×</button>
+                <div class="chat-header">
+                    <h2>DM with ${otherUser}</h2>
+                </div>
+                <div class="messages"></div>
+                <div class="input-area">
+                    <input type="text" placeholder="Type your message...">
+                    <button onclick="sendDMMessage(this)">Send</button>
+                </div>
+            `;
+
+            document.getElementById('chatWindows').appendChild(chatWindow);
+            activeChats.push({
+                type: 'dm',
+                otherUser: otherUser,
+                dmId: [username, otherUser].sort().join('_')
+            });
+
+            loadDMMessages(chatWindow.querySelector('.messages'), dm.dmId);
+        }
+
+        function closeChatWindow(button) {
+            if (activeChats.length <= MIN_CHATS) {
+                alert('You must keep at least one chat window open!');
+                return;
+            }
+
+            const chatWindow = button.closest('.chat-window');
+            const index = Array.from(document.querySelectorAll('.chat-window')).indexOf(chatWindow);
+            activeChats.splice(index, 1);
+            chatWindow.remove();
+        }
+
+        function loadDMMessages(messagesDiv, dmId) {
+            database.ref('dmMessages').child(dmId).once('value')
+                .then((snapshot) => {
+                    messagesDiv.innerHTML = '';
+                    snapshot.forEach((childSnapshot) => {
+                        const data = childSnapshot.val();
+                        addMessageToChat(data, messagesDiv);
+                    });
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                });
+        }
+
+        function sendDMMessage(button) {
+            const chatWindow = button.closest('.chat-window');
+            const input = chatWindow.querySelector('input');
+            const message = input.value.trim();
+            if (!message) return;
+
+            const chatIndex = Array.from(document.querySelectorAll('.chat-window')).indexOf(chatWindow);
+            const chat = activeChats[chatIndex];
+
+            if (chat.type === 'dm') {
+                database.ref('dmMessages').child(chat.dmId).push({
+                    username: username,
+                    message: message,
+                    timestamp: Date.now()
+                });
+
+                database.ref('dms').child(chat.dmId).update({
+                    lastMessage: message,
+                    lastMessageTime: Date.now()
+                });
+            }
+
+            input.value = '';
+        }
+
+        // Listen for new DM messages
+        database.ref('dmMessages').on('child_added', (snapshot) => {
+            const dmId = snapshot.key;
+            const data = snapshot.val();
+            
+            const chatIndex = activeChats.findIndex(chat => 
+                chat.type === 'dm' && chat.dmId === dmId
+            );
+
+            if (chatIndex !== -1) {
+                const chatWindow = document.querySelectorAll('.chat-window')[chatIndex];
+                const messagesDiv = chatWindow.querySelector('.messages');
+                addMessageToChat(data, messagesDiv);
+            }
+        });
+
+        // Admin functions
+        function viewAllDMs() {
+            if (!isVerifiedABen && !isVerifiedLizzyBen) return;
+            
+            database.ref('dms').once('value')
+                .then((snapshot) => {
+                    let allDMs = [];
+                    snapshot.forEach((childSnapshot) => {
+                        allDMs.push(childSnapshot.val());
+                    });
+                    alert(JSON.stringify(allDMs, null, 2));
+                });
+        }
+
+        function deleteAllDMs() {
+            if (!isVerifiedABen && !isVerifiedLizzyBen) return;
+            
+            if (confirm('Are you sure you want to delete all DMs? This cannot be undone!')) {
+                database.ref('dms').remove()
+                    .then(() => {
+                        database.ref('dmMessages').remove()
+                            .then(() => {
+                                alert('All DMs deleted successfully');
+                                loadDMs();
+                            });
+                    });
+            }
+        }
+
+        // Update signOut function
+        function signOut() {
+            localStorage.removeItem('username');
+            localStorage.removeItem('isVerifiedABen');
+            localStorage.removeItem('isVerifiedLizzyBen');
+            localStorage.removeItem('banInfo');
+            deleteCookie('username');
+            deleteCookie('isVerifiedABen');
+            deleteCookie('isVerifiedLizzyBen');
+            deleteCookie('banInfo');
+            window.location.reload();
+        }
+
+        // Update window.onload function
+        window.onload = function() {
+            const savedUsername = localStorage.getItem('username') || getCookie('username');
+            const savedABen = localStorage.getItem('isVerifiedABen') === 'true' || getCookie('isVerifiedABen') === 'true';
+            const savedLizzyBen = localStorage.getItem('isVerifiedLizzyBen') === 'true' || getCookie('isVerifiedLizzyBen') === 'true';
+
+            if (savedUsername) {
+                username = savedUsername;
+                localStorage.setItem('username', username);
+                setCookie('username', username, 30);
+                
+                if (savedABen) {
+                    isVerifiedABen = true;
+                    localStorage.setItem('isVerifiedABen', 'true');
+                    setCookie('isVerifiedABen', 'true', 30);
+                    adminPanel.classList.add('visible');
+                }
+                if (savedLizzyBen) {
+                    isVerifiedLizzyBen = true;
+                    localStorage.setItem('isVerifiedLizzyBen', 'true');
+                    setCookie('isVerifiedLizzyBen', 'true', 30);
+                    adminPanel.classList.add('visible');
+                }
+                loadRooms();
+            } else {
+                usernameModal.style.display = 'flex';
+            }
+
+            // Check ban status after loading user info
+            checkBanStatus();
+        };
+
+        // Create main public chat room if it doesn't exist
+        database.ref('rooms').once('value')
+            .then((snapshot) => {
+                let mainRoomExists = false;
+                snapshot.forEach((childSnapshot) => {
+                    if (childSnapshot.val().name === 'Main Chat') {
+                        mainRoomExists = true;
+                    }
+                });
+                if (!mainRoomExists) {
+                    database.ref('rooms').push({
+                        name: 'Main Chat',
+                        isPrivate: false,
+                        createdBy: 'System',
+                        timestamp: Date.now(),
+                        isMainRoom: true
+                    });
+                }
+            });
+
+        // Check for ban status
+        function checkBanStatus() {
+            const banInfo = localStorage.getItem('banInfo') || getCookie('banInfo');
+            if (banInfo) {
+                try {
+                    const { until, reason } = JSON.parse(banInfo);
+                    if (until === 'forever' || until > Date.now()) {
+                        showBannedMessage(until, reason);
+                    } else {
+                        localStorage.removeItem('banInfo');
+                        deleteCookie('banInfo');
+                    }
+                } catch (e) {
+                    console.error('Error parsing ban info:', e);
+                }
+            }
+        }
+
+        function showBannedMessage(until, reason) {
+            const overlay = document.getElementById('bannedOverlay');
+            const message = document.getElementById('banMessage');
+            const countdown = document.getElementById('banCountdown');
+            
+            overlay.style.display = 'flex';
+            message.textContent = `Reason: ${reason}`;
+            
+            if (until === 'forever') {
+                countdown.textContent = 'Duration: FOREVER';
+            } else {
+                updateBanCountdown(until);
+                setInterval(() => updateBanCountdown(until), 1000);
+            }
+
+            // Disable all interactive elements
+            document.querySelectorAll('button, input, .room-item, .dm-item').forEach(el => {
+                el.style.pointerEvents = 'none';
+            });
+        }
+
+        function updateBanCountdown(until) {
+            const countdown = document.getElementById('banCountdown');
+            const now = Date.now();
+            const remaining = until - now;
+            
+            if (remaining <= 0) {
+                countdown.textContent = 'Ban has expired';
+                localStorage.removeItem('banInfo');
+                window.location.reload();
+                return;
+            }
+
+            const hours = Math.floor(remaining / (1000 * 60 * 60));
+            const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
+            
+            countdown.textContent = `Time remaining: ${hours}h ${minutes}m ${seconds}s`;
+        }
+
+        // Auto-delete inactive rooms and DMs
+        function checkInactiveContent() {
+            const oneMonthAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+            
+            // Check rooms
+            database.ref('rooms').once('value')
+                .then((snapshot) => {
+                    snapshot.forEach((childSnapshot) => {
+                        const room = childSnapshot.val();
+                        if (!room.isMainRoom && room.lastActivity < oneMonthAgo) {
+                            deleteRoom(childSnapshot.key);
+                        }
+                    });
+                });
+
+            // Check DMs
+            database.ref('dms').once('value')
+                .then((snapshot) => {
+                    snapshot.forEach((childSnapshot) => {
+                        const dm = childSnapshot.val();
+                        if (dm.lastMessageTime < oneMonthAgo) {
+                            deleteDM(childSnapshot.key);
+                        }
+                    });
+                });
+        }
+
+        function deleteDM(dmId) {
+            database.ref('dms').child(dmId).remove()
+                .then(() => {
+                    database.ref('dmMessages').child(dmId).remove();
+                });
+        }
+
+        // Ban system
+        let allUsers = new Set();
+
+        function showBanModal() {
+            if (!isVerifiedABen && !isVerifiedLizzyBen) return;
+            
+            const modal = document.getElementById('banModal');
+            const list = document.getElementById('banList');
+            list.innerHTML = '';
+            
+            // Get all users from messages
+            database.ref('messages').once('value')
+                .then((snapshot) => {
+                    snapshot.forEach((childSnapshot) => {
+                        const message = childSnapshot.val();
+                        allUsers.add(message.username);
+                    });
+                    
+                    // Get users from DMs
+                    return database.ref('dms').once('value');
+                })
+                .then((snapshot) => {
+                    snapshot.forEach((childSnapshot) => {
+                        const dm = childSnapshot.val();
+                        dm.participants.forEach(user => allUsers.add(user));
+                    });
+                    
+                    // Display users
+                    allUsers.forEach(user => {
+                        const div = document.createElement('div');
+                        div.className = 'ban-item';
+                        div.textContent = user;
+                        div.onclick = () => selectUserToBan(user);
+                        list.appendChild(div);
+                    });
+                    
+                    modal.style.display = 'flex';
+                });
+        }
+
+        function hideBanModal() {
+            document.getElementById('banModal').style.display = 'none';
+        }
+
+        function filterBanList(query) {
+            const items = document.querySelectorAll('.ban-item');
+            items.forEach(item => {
+                item.style.display = item.textContent.toLowerCase().includes(query.toLowerCase()) ? 'block' : 'none';
+            });
+        }
+
+        let selectedUser = null;
+
+        function selectUserToBan(user) {
+            selectedUser = user;
+            document.getElementById('banDuration').value = '';
+            document.getElementById('banReason').value = '';
+        }
+
+        function setBanDuration(duration) {
+            if (duration === 'forever') {
+                if (confirm('Are you sure you want to ban this user forever? This action cannot be undone.')) {
+                    const password = prompt('Enter the admin password to confirm:');
+                    if (password === 'palmcoco') {
+                        document.getElementById('banDuration').value = 'forever';
+                    }
+                }
+            }
+        }
+
+        function confirmBan() {
+            if (!selectedUser) return;
+            
+            const duration = document.getElementById('banDuration').value;
+            const reason = document.getElementById('banReason').value;
+            
+            if (!reason) {
+                alert('Please provide a reason for the ban');
+                return;
+            }
+            
+            if (duration === 'forever') {
+                banUser(selectedUser, 'forever', reason);
+            } else {
+                const hours = parseInt(duration);
+                if (isNaN(hours) || hours <= 0) {
+                    alert('Please enter a valid duration');
+                    return;
+                }
+                banUser(selectedUser, Date.now() + (hours * 60 * 60 * 1000), reason);
+            }
+        }
+
+        function banUser(username, until, reason) {
+            if (username === 'ABen' || username === 'LizzyBen' || username === 'ABen Bot') {
+                return; // Mods can't be banned
+            }
+
+            const banInfo = {
+                until: until,
+                reason: reason,
+                bannedBy: isVerifiedABen ? 'ABen' : 'LizzyBen',
+                timestamp: Date.now()
+            };
+
+            // Store ban in database
+            database.ref('bans').child(username).set(banInfo);
+
+            // Store ban in localStorage and cookies
+            localStorage.setItem('banInfo', JSON.stringify(banInfo));
+            setCookie('banInfo', JSON.stringify(banInfo), 30); // Store for 30 days
+
+            // If it's the current user, show ban message
+            if (username === window.username) {
+                showBannedMessage(until, reason);
+            }
+
+            hideBanModal();
+        }
+
+        // Run auto-delete check every day
+        setInterval(checkInactiveContent, 24 * 60 * 60 * 1000);
+
+        // Add notification system
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 5000);
+        }
+
+        // Update message listeners to show notifications
+        database.ref('messages').on('child_added', (snapshot) => {
+            const data = snapshot.val();
+            if (data.username !== username) {
+                showNotification(`New message from ${data.username}`);
+            }
+        });
+
+        // Add enter key support for sending messages
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                const activeInput = document.querySelector('.input-area input:focus');
+                if (activeInput) {
+                    const sendButton = activeInput.nextElementSibling;
+                    if (sendButton) {
+                        sendButton.click();
+                    }
+                }
+            }
+        }
+
+        document.addEventListener('keypress', handleKeyPress);
+
+        let messageCounts = new Map();
+        let lastMessageTimes = new Map();
+        let abenBotMessages = [
+            "Only trust accounts with a blue checkmark!",
+            "Use Code ABEN8 in the Fortnite item shop!",
+            "Remember, Spamming will get you banned for 6 hours!",
+            "Inappropriate behavior will get you banned.",
+            "Racist, anti-semetic, and homophobic slurs are prohibited.",
+            "Ay Aaaaaaay ABen",
+            "30 days of inactivity will auto delete your group chat.",
+            "Go to \"aben.autos\" for ABen Merch!",
+            "Don't forget to thank ABen for this AYMAZING site!"
+        ];
+        let abenBotLastMessage = 0;
+        let abenBotInterval = null;
+
+        function startABenBot() {
+            // Clear any existing interval
+            if (abenBotInterval) {
+                clearInterval(abenBotInterval);
+            }
+
+            abenBotInterval = setInterval(() => {
+                const now = Date.now();
+                if (now - abenBotLastMessage > 20 * 60 * 1000) { // 20 minutes of inactivity
+                    clearInterval(abenBotInterval);
+                    abenBotInterval = null;
+                    return;
+                }
+
+                if (now - abenBotLastMessage >= 5 * 60 * 1000) { // 5 minutes
+                    const mainRoom = document.querySelector('.room-item:first-child');
+                    const abenRoom = document.querySelector('.room-item:nth-child(2)');
+                    
+                    if (mainRoom && abenRoom) {
+                        const randomMessage = abenBotMessages[Math.floor(Math.random() * abenBotMessages.length)];
+                        database.ref('messages').push({
+                            username: 'ABen Bot',
+                            message: randomMessage,
+                            room: 'Main Chat',
+                            timestamp: Date.now()
+                        });
+                        
+                        setTimeout(() => {
+                            database.ref('messages').push({
+                                username: 'ABen Bot',
+                                message: randomMessage,
+                                room: 'ABen',
+                                timestamp: Date.now()
+                            });
+                        }, 1000);
+                        
+                        abenBotLastMessage = now;
+                    }
+                }
+            }, 60000); // Check every minute
+        }
+
+        function filterRooms(query) {
+            if (query.length > MAX_SEARCH_LENGTH) {
+                query = query.substring(0, MAX_SEARCH_LENGTH);
+            }
+
+            const rooms = document.querySelectorAll('.room-item');
+            rooms.forEach(room => {
+                const roomName = room.querySelector('span').textContent.toLowerCase();
+                room.style.display = roomName.includes(query.toLowerCase()) ? 'flex' : 'none';
+            });
+        }
+
+        // Update notification system
+        let unreadCounts = new Map();
+
+        function updateNotificationDot(roomKey, count) {
+            const roomElement = document.querySelector(`.room-item[data-room-key="${roomKey}"]`);
+            if (roomElement) {
+                if (count > 0) {
+                    roomElement.classList.add('has-notification');
+                } else {
+                    roomElement.classList.remove('has-notification');
+                }
+            }
+        }
+
+        function toggleTheme() {
+            isDarkMode = !isDarkMode;
+            localStorage.setItem('darkMode', isDarkMode);
+            document.body.classList.toggle('dark-mode', isDarkMode);
+            const themeSwitch = document.querySelector('.theme-switch');
+            themeSwitch.textContent = isDarkMode ? '☀️' : '🌙';
+        }
+
+        function closeAnnouncement() {
+            const banner = document.getElementById('announcementBanner');
+            banner.style.display = 'none';
+            setCookie('announcementClosed', 'true', 1);
+        }
+
+        function showAnnouncement() {
+            if (!getCookie('announcementClosed')) {
+                const banner = document.getElementById('announcementBanner');
+                banner.classList.add('visible');
+            }
+        }
+
+        function toggleMessageSelection(messageKey) {
+            if (selectedMessages.has(messageKey)) {
+                selectedMessages.delete(messageKey);
+            } else {
+                selectedMessages.add(messageKey);
+            }
+            updateMassDeleteButton();
+        }
+
+        function updateMassDeleteButton() {
+            const button = document.getElementById('massDeleteBtn');
+            if (selectedMessages.size > 0) {
+                button.classList.add('visible');
+            } else {
+                button.classList.remove('visible');
+            }
+        }
+
+        function deleteSelectedMessages() {
+            if (selectedMessages.size === 0) return;
+            
+            if (confirm(`Are you sure you want to delete ${selectedMessages.size} messages?`)) {
+                selectedMessages.forEach(messageKey => {
+                    deleteMessage(messageKey);
+                });
+                selectedMessages.clear();
+                updateMassDeleteButton();
+            }
+        }
+
+        function reportMessage(messageKey, username, message) {
+            const formData = new FormData();
+            formData.append('message', `Reported message from ${username}: ${message}`);
+            formData.append('messageKey', messageKey);
+
+            fetch('https://formspree.io/f/mjkyednk', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    showNotification('Message reported successfully');
+                } else {
+                    showNotification('Message reported successfully');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Message reported successfully');
+            });
+        }
+
+        function refreshRoom(roomKey) {
+            if (!isVerifiedABen && !isVerifiedLizzyBen) return;
+            
+            if (confirm('Are you sure you want to delete all messages in this room?')) {
+                database.ref('rooms').child(roomKey).once('value')
+                    .then((snapshot) => {
+                        const room = snapshot.val();
+                        if (!room) return;
+
+                        // Delete all messages in the room
+                        return database.ref('messages').orderByChild('room').equalTo(room.name).once('value')
+                            .then((messagesSnapshot) => {
+                                const updates = {};
+                                messagesSnapshot.forEach((childSnapshot) => {
+                                    updates[childSnapshot.key] = null;
+                                });
+                                return database.ref('messages').update(updates);
+                            });
+                    })
+                    .then(() => {
+                        // Refresh the chat window
+                        const chatWindow = document.querySelector(`.chat-window[data-room-key="${roomKey}"]`);
+                        if (chatWindow) {
+                            const messagesDiv = chatWindow.querySelector('.messages');
+                            messagesDiv.innerHTML = '';
+                        }
+                    })
+                    .catch((error) => {
+                        console.error('Error refreshing room:', error);
+                        alert('Error refreshing room');
+                    });
+            }
+        }
+
+        // Initialize theme
+        document.body.classList.toggle('dark-mode', isDarkMode);
+        const themeSwitch = document.querySelector('.theme-switch');
+        themeSwitch.textContent = isDarkMode ? '☀️' : '🌙';
+
+        // Show announcement
+        showAnnouncement();
+
+        function verifyABen() {
+            const password = document.getElementById('abenPasswordInput').value;
+            if (username === 'ABen' && password === '1232445') {
+                isVerifiedABen = true;
+                localStorage.setItem('isVerifiedABen', 'true');
+                setCookie('isVerifiedABen', 'true', 30);
+                adminPanel.classList.add('visible');
+                abenVerificationModal.style.display = 'none';
+                loadRooms();
+            } else if (username === 'LizzyBen' && password === 'poopyshit$') {
+                isVerifiedLizzyBen = true;
+                localStorage.setItem('isVerifiedLizzyBen', 'true');
+                setCookie('isVerifiedLizzyBen', 'true', 30);
+                adminPanel.classList.add('visible');
+                abenVerificationModal.style.display = 'none';
+                loadRooms();
+            } else {
+                alert('Incorrect password!');
+            }
+        }
+
+        function deleteAllMessages() {
+            if (!isVerifiedABen && !isVerifiedLizzyBen) return;
+            
+            if (confirm('Are you sure you want to delete all messages in Main Chat and ABen room? This cannot be undone!')) {
+                const rooms = ['Main Chat', 'ABen'];
+                const updates = {};
+                
+                // Delete messages for both rooms
+                rooms.forEach(room => {
+                    database.ref('messages').orderByChild('room').equalTo(room).once('value')
+                        .then((snapshot) => {
+                            snapshot.forEach((childSnapshot) => {
+                                updates[childSnapshot.key] = null;
+                            });
+                            return database.ref('messages').update(updates);
+                        })
+                        .then(() => {
+                            // Refresh the chat windows
+                            const chatWindows = document.querySelectorAll('.chat-window');
+                            chatWindows.forEach(chatWindow => {
+                                const messagesDiv = chatWindow.querySelector('.messages');
+                                if (messagesDiv) {
+                                    messagesDiv.innerHTML = '';
+                                }
+                            });
+                        })
+                        .catch((error) => {
+                            console.error('Error deleting messages:', error);
+                            alert('Error deleting messages');
+                        });
+                });
+            }
+        }
+
+        // Call the function to delete all messages
+        deleteAllMessages();
+
+        // Add these new functions
+        function toggleRestartServers() {
+            if (!isVerifiedABen && !isVerifiedLizzyBen) return;
+            
+            const dropdown = document.getElementById('restartServersDropdown');
+            dropdown.classList.toggle('visible');
+            
+            if (dropdown.classList.contains('visible')) {
+                loadRestartServersList();
+            }
+        }
+
+        function loadRestartServersList() {
+            const list = document.getElementById('restartServersList');
+            list.innerHTML = '';
+            
+            database.ref('rooms').once('value')
+                .then((snapshot) => {
+                    snapshot.forEach((childSnapshot) => {
+                        const room = childSnapshot.val();
+                        const div = document.createElement('div');
+                        div.className = 'restart-servers-item';
+                        div.innerHTML = `
+                            <input type="checkbox" class="restart-servers-checkbox" id="room-${childSnapshot.key}">
+                            <span>${room.name}</span>
+                        `;
+                        list.appendChild(div);
+                    });
+                });
+        }
+
+        function filterRestartServers(query) {
+            const items = document.querySelectorAll('.restart-servers-item');
+            items.forEach(item => {
+                const roomName = item.querySelector('span').textContent.toLowerCase();
+                item.style.display = roomName.includes(query.toLowerCase()) ? 'flex' : 'none';
+            });
+        }
+
+        function refreshSelectedRooms() {
+            if (!isVerifiedABen && !isVerifiedLizzyBen) return;
+            
+            const selectedRooms = [];
+            document.querySelectorAll('.restart-servers-checkbox:checked').forEach(checkbox => {
+                const roomId = checkbox.id.replace('room-', '');
+                selectedRooms.push(roomId);
+            });
+            
+            if (selectedRooms.length === 0) {
+                alert('Please select at least one room to refresh');
+                return;
+            }
+            
+            if (confirm(`Are you sure you want to delete all messages in ${selectedRooms.length} selected room(s)?`)) {
+                selectedRooms.forEach(roomId => {
+                    database.ref('rooms').child(roomId).once('value')
+                        .then((snapshot) => {
+                            const room = snapshot.val();
+                            if (!room) return;
+
+                            return database.ref('messages').orderByChild('room').equalTo(room.name).once('value')
+                                .then((messagesSnapshot) => {
+                                    const updates = {};
+                                    messagesSnapshot.forEach((childSnapshot) => {
+                                        updates[childSnapshot.key] = null;
+                                    });
+                                    return database.ref('messages').update(updates);
+                                });
+                        })
+                        .then(() => {
+                            // Refresh the chat window if it's open
+                            const chatWindow = document.querySelector(`.chat-window[data-room-key="${roomId}"]`);
+                            if (chatWindow) {
+                                const messagesDiv = chatWindow.querySelector('.messages');
+                                messagesDiv.innerHTML = '';
+                            }
+                        })
+                        .catch((error) => {
+                            console.error('Error refreshing room:', error);
+                            alert('Error refreshing room');
+                        });
+                });
+            }
+        }
+
+        function checkSpam(username) {
+            const now = Date.now();
+            const lastMessageTime = lastMessageTimes.get(username) || 0;
+            const messageCount = messageCounts.get(username) || 0;
+
+            if (now - lastMessageTime < 4000) { // 4 seconds
+                messageCounts.set(username, messageCount + 1);
+                if (messageCount + 1 >= 6) { // 6 messages
+                    banUser(username, Date.now() + (6 * 60 * 60 * 1000), 'Spamming detected (6 messages in 4 seconds)');
+                    return true;
+                }
+            } else {
+                messageCounts.set(username, 1);
+            }
+            lastMessageTimes.set(username, now);
+            return false;
+        }
+    </script>
 </body>
 </html>
